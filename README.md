@@ -1,88 +1,134 @@
-Steps -
+# CI/CD Pipeline with Jenkins, Maven, and Nexus on Ubuntu
 
-1. Create Ubuntu server -> T2 medium, 30 GB
+This project demonstrates how to set up a complete CI/CD pipeline using **Jenkins**, **Maven**, and **Nexus** on an Ubuntu server. The pipeline automates code build, artifact deployment to Nexus, and deployment to an Nginx web server.
 
-2. Install Jenkins on ubuntu server. -
+---
 
-   https://www.jenkins.io/doc/book/installing/linux/
+## 🚀 Prerequisites
 
-3. Install maven 3.8.7
+* **AWS EC2 Instance**: Ubuntu Server (T2 Medium, 30 GB storage)
+* **Basic knowledge** of Linux commands, Jenkins, Maven, and Docker
 
-   # apt install maven -y
+---
 
-4. Nexus Installation on docker image
-   
-  # apt install docker.io -y
+## ⚙️ Setup Steps
 
-  # docker pull sonatype/nexus3
+### 1. Create Ubuntu Server
 
-  # docker volume create nexus-data
+* Instance type: **t2.medium**
+* Storage: **30 GB**
 
-  # docker run -d -p 8081:8081 --name nexus \
+---
+
+### 2. Install Jenkins
+
+Follow the official Jenkins installation guide:
+👉 [Jenkins Installation on Linux](https://www.jenkins.io/doc/book/installing/linux/)
+
+---
+
+### 3. Install Maven
+
+```bash
+sudo apt install maven -y
+```
+
+* Installed version: **Maven 3.8.7**
+
+---
+
+### 4. Nexus Installation on Docker
+
+```bash
+sudo apt install docker.io -y
+sudo docker pull sonatype/nexus3
+sudo docker volume create nexus-data
+sudo docker run -d -p 8081:8081 --name nexus \
   -v nexus-data:/nexus-data \
   sonatype/nexus3
+```
 
-5. Fetch password -
+---
 
-# docker ps
+### 5. Fetch Nexus Admin Password
 
-# docker exec -it nexus /bin/bash
+```bash
+docker ps
+docker exec -it nexus /bin/bash
+cat /nexus-data/admin.password
+```
 
-# cat /nexus-data/admin.password
+Example output:
 
+```
 da2a59b0-3c0d-4b8e-b309-fc5d3e0e7c0c
+```
 
+---
 
-6. Install below Plugins on Jenkins server
+### 6. Install Jenkins Plugins
 
-1. Pipeline Maven Integration
+* **Pipeline Maven Integration**
+* **Nexus Artifact Uploader**
 
-2. Nexus Artifact Uploader
+---
 
+### 7. Configure Maven in Jenkins
 
-7. Navigate to Manage Jenkins -> Tools -> Configure Maven installation ->
+Navigate to:
+`Manage Jenkins -> Tools -> Configure Maven installation`
 
-   Name : M3
-   MAVEN_HOME : /usr/share/maven
+* **Name**: `M3`
+* **MAVEN\_HOME**: `/usr/share/maven`
 
-8.  Managed Jenkins -> Managed Files -> Add new config (Global-Setting)-> content -> 111
-    
+---
 
+### 8. Add Global Maven Settings
+
+Navigate to:
+`Manage Jenkins -> Managed Files -> Add new config (Global-Setting)`
+
+Add content:
+
+```xml
 <servers>
     <server>
       <id>maven-releases</id>
       <username>admin</username>
       <password>admin123</password>
     </server>
-
     <server>
       <id>maven-snapshots</id>
       <username>admin</username>
       <password>admin123</password>
     </server>
-  </servers>
-</settings> 
-  
+</servers>
+```
 
-9. Login to Jenkins servr
+---
 
+### 9. Configure Settings.xml on Jenkins Server
 
-# ls -l /var/lib/jenkins/.M2/
-# mkdir -p /var/lib/jenkins/.m2
-# vim /var/lib/jenkins/.m2/settings.xml
+```bash
+ls -l /var/lib/jenkins/.m2/
+mkdir -p /var/lib/jenkins/.m2
+vim /var/lib/jenkins/.m2/settings.xml
+```
 
+Add:
+
+```xml
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
                               https://maven.apache.org/xsd/settings-1.0.0.xsd">
 
-<servers>
+  <servers>
     <server>
       <id>maven-releases</id>
       <username>admin</username>
       <password>admin123</password>
     </server>
-
     <server>
       <id>maven-snapshots</id>
       <username>admin</username>
@@ -90,15 +136,19 @@ da2a59b0-3c0d-4b8e-b309-fc5d3e0e7c0c
     </server>
   </servers>
 </settings>
+```
 
+---
 
-10. Edit POM.xml for server IP
+### 10. Update POM.xml
 
- ex. 52.66.206.151
+Edit `POM.xml` with server IP (example: `52.66.206.151`).
 
+---
 
-11. Write your Jenkinsfile
+### 11. Jenkinsfile (Pipeline Script)
 
+```groovy
 pipeline {
     agent any
 
@@ -147,15 +197,39 @@ pipeline {
         }
     }
 }
+```
 
+---
 
+### 12. Configure Sudo Permissions for Jenkins
 
+Edit sudoers file:
 
-12. # vim /etc/sudoers
+```bash
+sudo vim /etc/sudoers
+```
 
+Add:
 
-
-
+```
 jenkins ALL=(ALL) NOPASSWD: /bin/systemctl restart nginx, /bin/rm, /bin/cp
-or
+```
+
+Or alternatively:
+
+```bash
 sudo chown -R jenkins:jenkins /var/www/html
+```
+
+---
+
+## ✅ Final Workflow
+
+1. Jenkins pulls code from GitHub
+2. Builds with Maven
+3. Uploads artifacts to Nexus
+4. Downloads artifact from Nexus
+5. Deploys artifact to **Nginx**
+
+---
+
