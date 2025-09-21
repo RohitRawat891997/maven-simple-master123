@@ -43,9 +43,7 @@ sudo apt install maven -y
 sudo apt install docker.io -y
 sudo docker pull sonatype/nexus3
 sudo docker volume create nexus-data
-sudo docker run -d -p 8081:8081 --name nexus \
-  -v nexus-data:/nexus-data \
-  sonatype/nexus3
+sudo docker run -d -p 8081:8081 --name nexus -v nexus-data:/nexus-data sonatype/nexus3
 ```
 
 ---
