@@ -110,6 +110,7 @@ Add content:
 ```bash
 ls -l /var/lib/jenkins/.m2/
 mkdir -p /var/lib/jenkins/.m2
+chown -R  jenkins:jenkins  /var/lib/jenkins/.m2
 vim /var/lib/jenkins/.m2/settings.xml
 ```
 
