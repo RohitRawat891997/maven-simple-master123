@@ -60,6 +60,9 @@ Example output:
 
 ```
 da2a59b0-3c0d-4b8e-b309-fc5d3e0e7c0c
+
+set nexus username = admin
+set nexus password = admin123
 ```
 
 ---
@@ -67,7 +70,11 @@ da2a59b0-3c0d-4b8e-b309-fc5d3e0e7c0c
 ### 6. Install Jenkins Plugins
 
 * **Pipeline Maven Integration**
+  ![WhatsApp Image 2025-09-22 at 21 51 42_04b71ac6](https://github.com/user-attachments/assets/403fc6cc-f598-47bc-a963-78cbfe96d2dc)
+
 * **Nexus Artifact Uploader**
+  ![WhatsApp Image 2025-09-22 at 21 47 39_1d311dff](https://github.com/user-attachments/assets/82f7db74-71f5-40ab-abf5-85c33bb9e22a)
+
 
 ---
 
@@ -110,7 +117,9 @@ Add content:
 ```bash
 ls -l /var/lib/jenkins/.m2/
 mkdir -p /var/lib/jenkins/.m2
-chown -R  jenkins:jenkins  /var/lib/jenkins/.m2
+mkdir -p /var/lib/jenkins/.m2/repository
+chown -R jenkins:jenkins /var/lib/jenkins/.m2
+sudo chmod -R 755 /var/lib/jenkins/.m2
 vim /var/lib/jenkins/.m2/settings.xml
 ```
 
@@ -141,7 +150,7 @@ Add:
 
 ### 10. Update POM.xml
 
-Edit `POM.xml` with server IP (example: `52.66.206.151`).
+Edit `POM.xml` with server IP (example: `192.168.18.141`).
 
 ---
 
@@ -153,25 +162,26 @@ pipeline {
 
     environment {
         APP_NAME = "myapp"
+        MAVEN_REPO = "/tmp/maven-repo"
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'master', url: 'https://github.com/RohitRawat891997/register-app.git'
+                git branch: 'main', url: 'https://github.com/rohitrawat891997/register-app.git'
             }
         }
 
         stage('Build with Maven') {
             steps {
-                sh 'mvn clean package'
+                sh "mvn -Dmaven.repo.local=${MAVEN_REPO} clean package"
             }
         }
 
         stage('Upload to Nexus') {
             steps {
                 withMaven(maven: 'M3') {
-                    sh "mvn clean deploy -s /var/lib/jenkins/.m2/settings.xml -DskipTests"
+                    sh "mvn -Dmaven.repo.local=${MAVEN_REPO} clean deploy -s /var/lib/jenkins/.m2/settings.xml -DskipTests"
                 }
             }
         }
@@ -180,22 +190,32 @@ pipeline {
             steps {
                 sh """
                 curl -u admin:admin@123 -O \
-                http://65.2.9.176:8081/repository/maven-releases/com/github/jitpack/maven-simple/0.2-SNAPSHOT/maven-simple-0.2-SNAPSHOT.jar
+                http://192.168.18.141:8081/repository/maven-releases/com/github/jitpack/maven-simple/0.2-SNAPSHOT/maven-simple-0.2-SNAPSHOT.jar
                 """
             }
         }
 
-        stage('Deploy to Nginx') {
+        stage("Deploy using Dockerfile") {
             steps {
                 sh """
-                sudo rm -rf /var/www/html/*
-                sudo cp target/maven-simple-0.2-SNAPSHOT.jar /var/www/html/
-                sudo systemctl restart nginx
+                docker run -itd --name=tomcat -e  ALLOW_EMPTY_PASSWORD=yes -p 8082:8080 bitnami/tomcat
+                docker cp webapp/target/*.war tomcat:/opt/bitnami/tomcat/webapps
+                docker restart tomcat
                 """
             }
         }
     }
 }
+
+```
+```
+### Run these commands for permission
+
+usermod -aG docker  $USER
+usermod -aG docker jenkins
+newgrp
+systemctl restart docker
+
 ```
 
 ---
@@ -228,7 +248,7 @@ sudo chown -R jenkins:jenkins /var/www/html
 2. Builds with Maven
 3. Uploads artifacts to Nexus
 4. Downloads artifact from Nexus
-5. Deploys artifact to **Nginx**
+5. Deploys artifact to **Tomcat**
 
 ---
 
