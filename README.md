@@ -234,11 +234,7 @@ Add:
 jenkins ALL=(ALL) NOPASSWD: /bin/systemctl restart nginx, /bin/rm, /bin/cp
 ```
 
-Or alternatively:
 
-```bash
-sudo chown -R jenkins:jenkins /var/www/html
-```
 
 ---
 
