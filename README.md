@@ -158,7 +158,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'master', url: 'https://github.com/ygminds73/maven-simple-master.git'
+                git branch: 'master', url: 'https://github.com/RohitRawat891997/register-app.git'
             }
         }
 
