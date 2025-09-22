@@ -84,7 +84,7 @@ Navigate to:
 ### 8. Add Global Maven Settings
 
 Navigate to:
-`Manage Jenkins -> Managed Files -> Add new config (Global-Setting)`
+`Manage Jenkins -> Managed Files -> Add new config (Global Maven settings.xml)`
 
 Add content:
 
